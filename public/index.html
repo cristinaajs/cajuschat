@@ -180,7 +180,7 @@ body{font-family:'Inter',sans-serif;background:var(--creme2);color:var(--text);m
     <div class="cajus-card">
       <div class="cajus-avatar">C</div>
       <div class="cajus-info">
-        <h2>Cajus Ferreira</h2>
+        <h2>Cajus</h2>
         <div class="role">Coordenador de Projetos · Visita Amazônia</div>
         <p>Olá! Sou o Cajus, coordenador de projetos aqui na agência. Seja bem-vindo(a) à <strong>Visita Amazônia</strong>!<br><br>
 Aqui usamos um canal de comunicação interno para resolver tudo em tempo real. Você vai entrar nesse canal e um colega — eu mesmo — vai te mandar situações do dia a dia da agência. <strong>Você precisa responder em português</strong>, escolhendo as palavras certas para cada momento.<br><br>
@@ -245,7 +245,7 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
         <div class="sidebar-section">Mensagens diretas</div>
         <div class="sidebar-dm">
           <div class="dm-av">C</div>
-          <span>Cajus Ferreira</span>
+          <span>Cajus</span>
         </div>
         <div class="progress-mini">
           <div class="progress-mini-label">Progresso da sessão</div>
@@ -259,7 +259,7 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
         <div class="chat-topbar">
           <div class="dm-av msg-av-cajus" style="width:28px;height:28px;border-radius:6px;font-size:11px;">C</div>
           <div>
-            <div class="chat-topbar-name">Cajus Ferreira</div>
+            <div class="chat-topbar-name">Cajus</div>
             <div style="display:flex;align-items:center;gap:4px;">
               <div class="chat-topbar-dot"></div>
               <div class="chat-topbar-status">ativo agora</div>
@@ -276,7 +276,7 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
 
         <div class="chat-input-area">
           <div class="input-box">
-            <input type="text" id="userInput" placeholder="Mensagem para Cajus Ferreira..." />
+            <input type="text" id="userInput" placeholder="Mensagem para Cajus..." />
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
           </div>
         </div>
@@ -325,7 +325,7 @@ function addMessage(role, text){
   content.className = 'msg-content';
   const sender = document.createElement('div');
   sender.className = 'msg-sender' + (role!=='user' ? ' cajus-name' : '');
-  sender.textContent = role==='user' ? 'Você' : 'Cajus Ferreira';
+  sender.textContent = role==='user' ? 'Você' : 'Cajus';
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   bubble.textContent = text;
@@ -355,7 +355,7 @@ function buildSystemPrompt(){
     livre: 'O aluno pode usar SUBJUNTIVO ou IMPERATIVO. Ambos sao corretos para a situacao.'
   };
   var linhas = [
-    'Voce e Cajus Ferreira, coordenador da Visita Amazonia, agencia de turismo da Amazonia.',
+    'Voce e Cajus, coordenador da Visita Amazonia, agencia de turismo da Amazonia.',
     'Voce conversa pelo Slack com colaborador estrangeiro aprendendo portugues B1.',
     '',
     'MODO: ' + modos[mode],
