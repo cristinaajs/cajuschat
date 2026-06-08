@@ -131,6 +131,35 @@ body{font-family:'Inter',sans-serif;background:var(--creme2);color:var(--text);m
 .action-btn{font-family:'Inter',sans-serif;font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;transition:all 0.15s;border:0.5px solid var(--border);background:var(--creme);color:var(--text);}
 .action-btn:hover{background:var(--verde-pale);}
 .action-btn.primary{background:var(--verde);color:#fff;border-color:var(--verde);}
+
+/* RESPONSIVO — telas até 640px */
+@media (max-width: 640px) {
+  .main{padding:0.75rem 0.75rem 2rem;}
+
+  /* Onboarding */
+  .cajus-card{flex-direction:column;gap:0.75rem;}
+  .cajus-avatar{width:52px;height:52px;font-size:20px;}
+  .cajus-info h2{font-size:17px;}
+  .cajus-info p{font-size:13px;}
+  .mode-grid{grid-template-columns:1fr;}
+  .mode-btn{display:flex;align-items:center;gap:12px;padding:0.75rem 1rem;}
+  .mode-icon{font-size:20px;margin-bottom:0;flex-shrink:0;}
+  .start-btn{align-self:stretch;text-align:center;}
+
+  /* Chat */
+  .slack-wrap{height:calc(100dvh - 108px);border-radius:10px;min-height:380px;}
+  .slack-sidebar{display:none;}
+  .chat-topbar{padding:10px 12px;}
+  .chat-messages{padding:10px 10px;}
+  .msg-content{max-width:85%;}
+  .msg-bubble{font-size:13px;}
+  .chat-input-area{padding:8px 10px;}
+
+  /* Resultados */
+  .results-card{padding:1.5rem 1rem;}
+  .results-score{font-size:36px;}
+  .results-emoji{font-size:36px;}
+}
 </style>
 </head>
 <body>
