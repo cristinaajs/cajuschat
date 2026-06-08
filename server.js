@@ -10,6 +10,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/chat', async (req, res) => {
   const { messages, systemPrompt } = req.body;
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('API key presente:', !!apiKey, '| tamanho:', (apiKey || '').length);
   if (!apiKey) return res.status(500).json({ error: 'Chave ANTHROPIC_API_KEY não encontrada no arquivo .env' });
 
   try {
