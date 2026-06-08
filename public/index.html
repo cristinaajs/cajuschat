@@ -219,6 +219,11 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
       </div>
     </div>
 
+    <div>
+      <div class="mode-title" style="margin-bottom:0.5rem">Qual é o seu nome?</div>
+      <input type="text" id="nomeInput" placeholder="Seu nome completo..." style="width:100%;padding:10px 14px;border:0.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:var(--creme);color:var(--text);outline:none;"/>
+    </div>
+
     <div id="errorToast" class="error-toast"></div>
     <button class="start-btn" onclick="startGame()">Entrar no canal →</button>
   </div>
@@ -299,6 +304,7 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
 
 <script>
 let mode=null,totalRounds=0,currentRound=0,score=0,history=[];
+let nomeAluno='',tentativasRodada=0,resumoRodadas=[];
 
 function selectMode(m,btn){mode=m;document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
 function selectRounds(n,btn){totalRounds=n;document.querySelectorAll('.round-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
@@ -403,8 +409,11 @@ function parseJSON(text){
 }
 
 async function startGame(){
+  const nome=document.getElementById('nomeInput')?.value.trim()||'';
+  if(!nome)return showError('Digite seu nome antes de continuar.');
   if(!mode)return showError('Escolha o que vamos praticar antes de continuar.');
   if(!totalRounds)return showError('Escolha quantas situações por sessão.');
+  nomeAluno=nome;tentativasRodada=0;resumoRodadas=[];
   currentRound=0;score=0;history=[];
   document.getElementById('chatMessages').innerHTML='';
   showScreen('screen-game');
@@ -442,10 +451,13 @@ async function sendMsg(){
   document.getElementById('userInput').disabled=true;
   showTyping(true);
   try{
+    tentativasRodada++;
     const raw=await callAPI(val);
     const result=parseJSON(raw);
     showTyping(false);
     if(result.status==='correct'){
+      resumoRodadas.push({rodada:currentRound,tentativas:tentativasRodada,resposta:val});
+      tentativasRodada=0;
       score+=result.points||10;
       currentRound++;
       updateProgress();
@@ -479,7 +491,32 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('userInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
 });
 
+async function saveSession(){
+  const pct=Math.round(score/(totalRounds*10)*100);
+  const totalTentativas=resumoRodadas.reduce((s,r)=>s+r.tentativas,0);
+  try{
+    await fetch('/api/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        timestamp:new Date().toISOString(),
+        nome:nomeAluno,
+        modo:mode,
+        rodadas_planejadas:totalRounds,
+        rodadas_completadas:resumoRodadas.length,
+        pontuacao:score,
+        percentual:pct,
+        tentativas_total:totalTentativas,
+        erros_total:totalTentativas-resumoRodadas.length,
+        resumo_rodadas:JSON.stringify(resumoRodadas),
+        historico:JSON.stringify(history)
+      })
+    });
+  }catch(e){}
+}
+
 function showResults(){
+  saveSession();
   const pct=Math.round(score/(totalRounds*10)*100);
   let emoji='🌿',title='Bom trabalho!',sub='Continue praticando para dominar o português corporativo.';
   if(pct>=90){emoji='🏆';title='Excelente!';sub='Você mandou bem em todas as situações. A agência ficou orgulhosa!';}

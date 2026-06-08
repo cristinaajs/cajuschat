@@ -53,6 +53,21 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+app.post('/api/save', async (req, res) => {
+  const webhookUrl = process.env.SHEETS_WEBHOOK_URL;
+  if (!webhookUrl) return res.json({ ok: false });
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    res.json({ ok: true });
+  } catch(e) {
+    res.json({ ok: false });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => console.log(`\n✅ Servidor rodando! Acesse: http://localhost:${PORT}\n`));
