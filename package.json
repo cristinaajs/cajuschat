@@ -1,0 +1,14 @@
+{
+  "name": "chatbot-bia",
+  "version": "1.0.0",
+  "description": "Chatbot Professora Bia - TCC Subjuntivo e Imperativo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.7.0"
+  }
+}

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Visita Amazônia — Canal da Equipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --verde:#1B4332;--verde-mid:#2D6A4F;--verde-light:#52B788;--verde-pale:#D8F3DC;
+  --amarelo:#F4A261;--creme:#FDFAF4;--creme2:#F0EAD6;
+  --text:#1A1A1A;--text-muted:#5C5C5C;
+  --border:rgba(27,67,50,0.15);--shadow:0 4px 24px rgba(27,67,50,0.12);
+  --slack-bg:#1A1D21;--slack-sidebar:#1A1D21;--slack-surface:#222529;
+  --slack-border:rgba(255,255,255,0.08);--slack-text:#D1D2D3;--slack-muted:#8B8D92;
+}
+body{font-family:'Inter',sans-serif;background:var(--creme2);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0;}
+
+/* TOPBAR */
+.topbar{width:100%;background:var(--verde);padding:10px 2rem;display:flex;align-items:center;gap:14px;}
+.topbar-logo{font-family:'Playfair Display',serif;font-size:15px;color:#fff;letter-spacing:0.3px;line-height:1.2;}
+.topbar-logo span{display:block;font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:#D8F3DC;letter-spacing:1.5px;text-transform:uppercase;}
+.topbar-leaf{font-size:22px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--amarelo);box-shadow:0 0 0 2px var(--verde);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* MAIN */
+.main{width:100%;max-width:780px;padding:2rem 1rem 3rem;display:flex;flex-direction:column;gap:1.25rem;}
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;gap:1rem;}
+
+/* ONBOARD */
+.cajus-card{background:var(--creme);border:0.5px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow);display:flex;gap:1.25rem;align-items:flex-start;}
+.cajus-avatar{flex-shrink:0;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--verde-mid),var(--verde));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:26px;color:#fff;border:3px solid var(--verde-pale);position:relative;}
+.cajus-avatar::after{content:'🌿';position:absolute;bottom:-4px;right:-4px;font-size:16px;}
+.cajus-info h2{font-family:'Playfair Display',serif;font-size:20px;color:var(--verde);margin-bottom:2px;}
+.cajus-info .role{font-size:12px;color:var(--verde-light);font-weight:500;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.cajus-info p{font-size:14px;line-height:1.7;color:var(--text-muted);}
+.mode-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--verde);margin-bottom:0.75rem;}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mode-btn{background:var(--creme);border:0.5px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;text-align:left;transition:all 0.18s;font-family:'Inter',sans-serif;}
+.mode-btn:hover{border-color:var(--verde-light);background:var(--verde-pale);transform:translateY(-2px);}
+.mode-btn.selected{border-color:var(--verde-mid);background:var(--verde-pale);border-width:1.5px;}
+.mode-icon{font-size:22px;margin-bottom:6px;}
+.mode-label{font-size:13px;font-weight:500;color:var(--verde);display:block;margin-bottom:3px;}
+.mode-desc{font-size:11px;color:var(--text-muted);line-height:1.4;}
+.round-selector{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.round-selector label{font-size:13px;color:var(--text-muted);}
+.round-btn{width:36px;height:36px;border-radius:50%;border:0.5px solid var(--border);background:var(--creme);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;color:var(--text);}
+.round-btn:hover{border-color:var(--verde-light);background:var(--verde-pale);}
+.round-btn.selected{background:var(--verde);color:#fff;border-color:var(--verde);}
+.start-btn{background:var(--verde);color:#fff;border:none;border-radius:10px;padding:13px 28px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;align-self:flex-start;letter-spacing:0.3px;transition:opacity 0.15s,transform 0.15s;}
+.start-btn:hover{opacity:0.88;transform:translateY(-1px);}
+.error-toast{background:#FFF3F3;border:0.5px solid rgba(180,50,50,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:#6b1a1a;display:none;}
+
+/* SLACK LAYOUT */
+.slack-wrap{background:var(--slack-bg);border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:flex;height:580px;}
+
+/* SIDEBAR */
+.slack-sidebar{width:220px;background:var(--slack-sidebar);border-right:0.5px solid var(--slack-border);display:flex;flex-direction:column;padding:0;flex-shrink:0;}
+.sidebar-workspace{padding:14px 16px;border-bottom:0.5px solid var(--slack-border);display:flex;align-items:center;gap:8px;}
+.workspace-name{font-size:13px;font-weight:500;color:#fff;}
+.workspace-dot{width:8px;height:8px;border-radius:50%;background:#2BAC76;flex-shrink:0;}
+.sidebar-section{padding:16px 16px 6px;font-size:11px;font-weight:500;color:var(--slack-muted);text-transform:uppercase;letter-spacing:0.8px;}
+.sidebar-channel{padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;border-radius:0;font-size:14px;color:var(--slack-muted);transition:background 0.1s;}
+.sidebar-channel.active{background:rgba(255,255,255,0.1);color:#fff;}
+.sidebar-channel .ch-hash{font-size:16px;opacity:0.6;}
+.sidebar-dm{padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#fff;background:rgba(255,255,255,0.1);}
+.dm-av{width:22px;height:22px;border-radius:4px;background:var(--verde-mid);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;flex-shrink:0;position:relative;}
+.dm-av::after{content:'';position:absolute;bottom:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#2BAC76;border:1.5px solid var(--slack-sidebar);}
+.progress-mini{padding:12px 16px;margin-top:auto;border-top:0.5px solid var(--slack-border);}
+.progress-mini-label{font-size:11px;color:var(--slack-muted);margin-bottom:6px;}
+.progress-mini-track{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.progress-mini-fill{height:100%;background:var(--verde-light);border-radius:2px;transition:width 0.4s;}
+.score-mini{font-size:12px;font-weight:500;color:var(--verde-light);margin-top:6px;}
+
+/* CHAT AREA */
+.slack-chat{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chat-topbar{padding:12px 16px;border-bottom:0.5px solid var(--slack-border);display:flex;align-items:center;gap:10px;}
+.chat-topbar-name{font-size:14px;font-weight:500;color:#fff;}
+.chat-topbar-status{font-size:12px;color:var(--slack-muted);}
+.chat-topbar-dot{width:8px;height:8px;border-radius:50%;background:#2BAC76;flex-shrink:0;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px;}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-track{background:transparent;}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+
+/* MESSAGE ROWS */
+.msg-row{display:flex;gap:10px;padding:4px 0;animation:fadeUp 0.2s ease;}
+.msg-row.user{flex-direction:row-reverse;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg-av-slack{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;margin-top:2px;}
+.msg-av-cajus{background:var(--verde-mid);color:#fff;}
+.msg-av-user{background:#4A3728;color:#D4956A;}
+.msg-content{display:flex;flex-direction:column;gap:2px;max-width:75%;}
+.msg-row.user .msg-content{align-items:flex-end;}
+.msg-sender{font-size:12px;font-weight:500;color:var(--slack-muted);}
+.msg-sender.cajus-name{color:#52B788;}
+.msg-bubble{padding:8px 12px;border-radius:8px;font-size:14px;line-height:1.6;color:var(--slack-text);white-space:pre-wrap;word-break:break-word;}
+.msg-row.bot .msg-bubble{background:var(--slack-surface);border-radius:2px 8px 8px 8px;}
+.msg-row.user .msg-bubble{background:#1D3D2F;color:#B8DBC8;border-radius:8px 2px 8px 8px;}
+.msg-time{font-size:11px;color:var(--slack-muted);}
+
+/* TYPING */
+.typing-row{display:flex;gap:10px;padding:4px 0;align-items:center;}
+.typing-bubble{padding:8px 12px;background:var(--slack-surface);border-radius:2px 8px 8px 8px;display:flex;gap:4px;align-items:center;}
+.typing-bubble span{width:5px;height:5px;border-radius:50%;background:var(--slack-muted);animation:bounce 1.2s infinite;}
+.typing-bubble span:nth-child(2){animation-delay:.2s}
+.typing-bubble span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
+
+/* INPUT */
+.chat-input-area{padding:12px 16px;border-top:0.5px solid var(--slack-border);}
+.input-box{background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;gap:8px;padding:8px 12px;}
+.input-box input{flex:1;background:transparent;border:none;outline:none;font-family:'Inter',sans-serif;font-size:14px;color:#fff;}
+.input-box input::placeholder{color:var(--slack-muted);}
+.send-btn{background:var(--verde-mid);color:#fff;border:none;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:opacity 0.15s;flex-shrink:0;}
+.send-btn:hover{opacity:0.85;}
+.send-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* RESULTS */
+.results-card{background:var(--creme);border:0.5px solid var(--border);border-radius:16px;padding:2rem;text-align:center;box-shadow:var(--shadow);}
+.results-emoji{font-size:48px;margin-bottom:1rem;}
+.results-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--verde);margin-bottom:6px;}
+.results-sub{font-size:14px;color:var(--text-muted);margin-bottom:1.5rem;}
+.results-score{font-family:'Playfair Display',serif;font-size:48px;color:var(--verde);margin-bottom:4px;}
+.results-detail{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;}
+.results-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.action-btn{font-family:'Inter',sans-serif;font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;transition:all 0.15s;border:0.5px solid var(--border);background:var(--creme);color:var(--text);}
+.action-btn:hover{background:var(--verde-pale);}
+.action-btn.primary{background:var(--verde);color:#fff;border-color:var(--verde);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-leaf">🌿</span>
+  <div class="topbar-logo">Visita Amazônia<span>Agência Criativa · Intranet</span></div>
+  <div class="topbar-right">
+    <div style="font-size:12px;color:#D8F3DC;font-weight:300;">Bem-vindo(a) ao time</div>
+    <div class="notif-dot"></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ONBOARD -->
+  <div class="screen active" id="screen-onboard">
+    <div class="cajus-card">
+      <div class="cajus-avatar">C</div>
+      <div class="cajus-info">
+        <h2>Cajus Ferreira</h2>
+        <div class="role">Coordenador de Projetos · Visita Amazônia</div>
+        <p>Olá! Sou o Cajus, coordenador de projetos aqui na agência. Seja bem-vindo(a) à <strong>Visita Amazônia</strong>!<br><br>
+Aqui usamos um canal de comunicação interno para resolver tudo em tempo real. Você vai entrar nesse canal e um colega — eu mesmo — vai te mandar situações do dia a dia da agência. <strong>Você precisa responder em português</strong>, escolhendo as palavras certas para cada momento.<br><br>
+O jeito que você escreve importa: uma mensagem mal redigida pode travar uma campanha ou irritar um cliente. Pronto(a) para entrar no canal?</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="mode-title">O que vamos praticar?</div>
+      <div class="mode-grid">
+        <button class="mode-btn" onclick="selectMode('subjuntivo',this)">
+          <div class="mode-icon">🌱</div>
+          <span class="mode-label">Subjuntivo</span>
+          <span class="mode-desc">Sugestões, desejos e pedidos indiretos com o presente do subjuntivo.</span>
+        </button>
+        <button class="mode-btn" onclick="selectMode('imperativo',this)">
+          <div class="mode-icon">📋</div>
+          <span class="mode-label">Imperativo</span>
+          <span class="mode-desc">Delegar tarefas e dar instruções diretas com o imperativo.</span>
+        </button>
+        <button class="mode-btn" onclick="selectMode('livre',this)">
+          <div class="mode-icon">🎯</div>
+          <span class="mode-label">Modo livre</span>
+          <span class="mode-desc">Situações mistas — você decide qual estrutura usar.</span>
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="mode-title" style="margin-bottom:0.5rem">Quantas situações por sessão?</div>
+      <div class="round-selector">
+        <label>Escolha:</label>
+        <button class="round-btn" onclick="selectRounds(3,this)">3</button>
+        <button class="round-btn" onclick="selectRounds(5,this)">5</button>
+        <button class="round-btn" onclick="selectRounds(7,this)">7</button>
+      </div>
+    </div>
+
+    <div id="errorToast" class="error-toast"></div>
+    <button class="start-btn" onclick="startGame()">Entrar no canal →</button>
+  </div>
+
+  <!-- SLACK CHAT -->
+  <div class="screen" id="screen-game">
+    <div class="slack-wrap">
+
+      <!-- SIDEBAR -->
+      <div class="slack-sidebar">
+        <div class="sidebar-workspace">
+          <div class="workspace-dot"></div>
+          <div class="workspace-name">Visita Amazônia</div>
+        </div>
+        <div class="sidebar-section">Canais</div>
+        <div class="sidebar-channel"><span class="ch-hash">#</span>geral</div>
+        <div class="sidebar-channel"><span class="ch-hash">#</span>campanhas</div>
+        <div class="sidebar-channel"><span class="ch-hash">#</span>clientes</div>
+        <div class="sidebar-section">Mensagens diretas</div>
+        <div class="sidebar-dm">
+          <div class="dm-av">C</div>
+          <span>Cajus Ferreira</span>
+        </div>
+        <div class="progress-mini">
+          <div class="progress-mini-label">Progresso da sessão</div>
+          <div class="progress-mini-track"><div class="progress-mini-fill" id="progressFill" style="width:0%"></div></div>
+          <div class="score-mini" id="scoreChip">0 pts · situação <span id="roundNum">1</span> de <span id="roundTotal">5</span></div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="slack-chat">
+        <div class="chat-topbar">
+          <div class="dm-av msg-av-cajus" style="width:28px;height:28px;border-radius:6px;font-size:11px;">C</div>
+          <div>
+            <div class="chat-topbar-name">Cajus Ferreira</div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div class="chat-topbar-dot"></div>
+              <div class="chat-topbar-status">ativo agora</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div id="typingRow" class="typing-row" style="display:none;padding:0 16px 8px;">
+          <div class="msg-av-slack msg-av-cajus" style="width:32px;height:32px;border-radius:6px;font-size:12px;">C</div>
+          <div class="typing-bubble"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="chat-input-area">
+          <div class="input-box">
+            <input type="text" id="userInput" placeholder="Mensagem para Cajus Ferreira..." />
+            <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="screen-results">
+    <div class="results-card">
+      <div class="results-emoji" id="resultsEmoji">🌿</div>
+      <div class="results-title" id="resultsTitle">Sessão concluída!</div>
+      <div class="results-sub" id="resultsSub"></div>
+      <div class="results-score" id="resultsScore">0 pts</div>
+      <div class="results-detail" id="resultsDetail"></div>
+      <div class="results-btns">
+        <button class="action-btn primary" onclick="restartGame()">Jogar novamente</button>
+        <button class="action-btn" onclick="goHome()">Escolher outro modo</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let mode=null,totalRounds=0,currentRound=0,score=0,history=[];
+
+function selectMode(m,btn){mode=m;document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
+function selectRounds(n,btn){totalRounds=n;document.querySelectorAll('.round-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
+function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',4000);}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function getTime(){const n=new Date();return n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();}
+
+function addMessage(role, text){
+  const msgs = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (role==='user' ? 'user' : 'bot');
+  const av = document.createElement('div');
+  av.className = 'msg-av-slack ' + (role==='user' ? 'msg-av-user' : 'msg-av-cajus');
+  av.textContent = role==='user' ? 'Eu' : 'C';
+  av.style.cssText = 'width:32px;height:32px;border-radius:6px;font-size:12px;';
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+  const sender = document.createElement('div');
+  sender.className = 'msg-sender' + (role!=='user' ? ' cajus-name' : '');
+  sender.textContent = role==='user' ? 'Você' : 'Cajus Ferreira';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = getTime();
+  content.appendChild(sender);
+  content.appendChild(bubble);
+  content.appendChild(time);
+  row.appendChild(av);
+  row.appendChild(content);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping(show){document.getElementById('typingRow').style.display=show?'flex':'none';const msgs=document.getElementById('chatMessages');msgs.scrollTop=msgs.scrollHeight;}
+
+function updateProgress(){
+  document.getElementById('progressFill').style.width=(currentRound/totalRounds*100)+'%';
+  document.getElementById('scoreChip').innerHTML=score+' pts · situação <span id="roundNum">'+currentRound+'</span> de <span id="roundTotal">'+totalRounds+'</span>';
+}
+
+function buildSystemPrompt(){
+  var modos = {
+    subjuntivo: 'O aluno deve usar PRESENTE DO SUBJUNTIVO na resposta. Frases com: espero que, quero que, preciso que, e importante que, sugiro que. ERRADO: imperativo ou condicional. CERTO: qualquer frase com esses gatilhos.',
+    imperativo: 'O aluno deve usar IMPERATIVO na resposta. Verbo direto sem sujeito: Envie, Sente-se, Prepare, Confirme, Aguarde. ERRADO: voce poderia, por favor poderia, eu gostaria. CERTO: verbo direto mesmo com por favor.',
+    livre: 'O aluno pode usar SUBJUNTIVO ou IMPERATIVO. Ambos sao corretos para a situacao.'
+  };
+  var linhas = [
+    'Voce e Cajus Ferreira, coordenador da Visita Amazonia, agencia de turismo da Amazonia.',
+    'Voce conversa pelo Slack com colaborador estrangeiro aprendendo portugues B1.',
+    '',
+    'MODO: ' + modos[mode],
+    '',
+    '!! REGRA ABSOLUTA: Responda SOMENTE JSON. Zero texto fora do JSON. !!',
+    '',
+    'Para INICIAR_SESSAO:',
+    '{"status":"start","messages":["ola animado explicando o modo","primeira situacao curta"]}',
+    '',
+    'Para avaliar resposta do aluno:',
+    'CORRETO = usou a estrutura gramatical do modo acima, mesmo que simples ou com por favor',
+    'ERRADO = usou estrutura diferente (ex: condicional quando devia ser imperativo)',
+    '',
+    'Se CORRETO: {"status":"correct","messages":["comemoracao emoji + explica por que funcionou comunicativamente","proxima situacao"],"points":10}',
+    'Se ERRADO: {"status":"retry","messages":["uma msg curta fingindo nao entender + reformula a mesma situacao"],"points":0}',
+    '',
+    'Tom: informal brasileiro, emojis, max 2 frases por situacao, NUNCA diga subjuntivo ou imperativo.'
+  ];
+  return linhas.join('\n');
+}
+
+async function callAPI(msg){
+  history.push({role:'user',content:msg});
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history,systemPrompt:buildSystemPrompt()})});
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    history.push({role:'assistant',content:data.reply});
+    return data.reply;
+  }catch(e){
+    history.pop();
+    throw e;
+  }
+}
+
+function parseJSON(text){
+  if(!text) return {status:'retry',messages:['Tenta de novo! 😅'],points:0};
+  try{
+    var clean = text.replace(/```json|```/g,'').trim();
+    // Se vier como string JSON escapada dentro de outro JSON, desescapa
+    var parsed = JSON.parse(clean);
+    if(typeof parsed === 'string') parsed = JSON.parse(parsed);
+    return parsed;
+  } catch(e){
+    var m = text.match(/\{[\s\S]*\}/);
+    if(m){
+      try{ return JSON.parse(m[0]); } catch(e2){}
+    }
+    return {status:'retry',messages:['Tenta de novo! 😅'],points:0};
+  }
+}
+
+async function startGame(){
+  if(!mode)return showError('Escolha o que vamos praticar antes de continuar.');
+  if(!totalRounds)return showError('Escolha quantas situações por sessão.');
+  currentRound=0;score=0;history=[];
+  document.getElementById('chatMessages').innerHTML='';
+  showScreen('screen-game');
+  document.getElementById('userInput').disabled=true;
+  document.getElementById('sendBtn').disabled=true;
+  showTyping(true);
+  try{
+    const raw=await callAPI('INICIAR_SESSAO');
+    const result=parseJSON(raw);
+    showTyping(false);
+    currentRound=1;
+    updateProgress();
+    const msgs=result.messages||[result.message||'Olá!'];
+    for(let i=0;i<msgs.length;i++){
+      if(i>0)await sleep(600);
+      addMessage('bot',msgs[i]);
+    }
+  }catch(e){
+    showTyping(false);
+    addMessage('bot','Oi! Tive um problema técnico aqui 😅 Tenta recarregar a página?');
+  }
+  document.getElementById('userInput').disabled=false;
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').focus();
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function sendMsg(){
+  const val=document.getElementById('userInput').value.trim();
+  if(!val||document.getElementById('sendBtn').disabled)return;
+  addMessage('user',val);
+  document.getElementById('userInput').value='';
+  document.getElementById('sendBtn').disabled=true;
+  document.getElementById('userInput').disabled=true;
+  showTyping(true);
+  try{
+    const raw=await callAPI(val);
+    const result=parseJSON(raw);
+    showTyping(false);
+    if(result.status==='correct'){
+      score+=result.points||10;
+      currentRound++;
+      updateProgress();
+      const msgs=result.messages||[];
+      for(let i=0;i<msgs.length;i++){
+        if(i>0)await sleep(800);
+        addMessage('bot',msgs[i]);
+      }
+      if(currentRound>totalRounds){
+        await sleep(1000);
+        showResults();
+        return;
+      }
+    } else {
+      const msgs=result.messages||[];
+      for(let i=0;i<msgs.length;i++){
+        if(i>0)await sleep(600);
+        addMessage('bot',msgs[i]);
+      }
+    }
+  }catch(e){
+    showTyping(false);
+    addMessage('bot','Hmm, não consegui processar isso agora. Tenta de novo? 🙏');
+  }
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').disabled=false;
+  document.getElementById('userInput').focus();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('userInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+});
+
+function showResults(){
+  const pct=Math.round(score/(totalRounds*10)*100);
+  let emoji='🌿',title='Bom trabalho!',sub='Continue praticando para dominar o português corporativo.';
+  if(pct>=90){emoji='🏆';title='Excelente!';sub='Você mandou bem em todas as situações. A agência ficou orgulhosa!';}
+  else if(pct>=60){emoji='🌿';title='Bom trabalho!';sub='Você está evoluindo. Mais uma rodada e vai dominar!';}
+  else{emoji='📚';title='Continue praticando!';sub='Não desanima — cada tentativa é aprendizado!';}
+  document.getElementById('resultsEmoji').textContent=emoji;
+  document.getElementById('resultsTitle').textContent=title;
+  document.getElementById('resultsSub').textContent=sub;
+  document.getElementById('resultsScore').textContent=score+' pts';
+  document.getElementById('resultsDetail').textContent=score+' de '+(totalRounds*10)+' pontos · '+pct+'% de aproveitamento';
+  showScreen('screen-results');
+}
+
+function restartGame(){score=0;currentRound=0;history=[];document.getElementById('chatMessages').innerHTML='';showScreen('screen-game');startGame();}
+function goHome(){score=0;currentRound=0;history=[];mode=null;totalRounds=0;document.querySelectorAll('.mode-btn,.round-btn').forEach(b=>b.classList.remove('selected'));showScreen('screen-onboard');}
+</script>
+</body>
+</html>
