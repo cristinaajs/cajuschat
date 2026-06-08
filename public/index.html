@@ -132,6 +132,11 @@ body{font-family:'Inter',sans-serif;background:var(--creme2);color:var(--text);m
 .action-btn:hover{background:var(--verde-pale);}
 .action-btn.primary{background:var(--verde);color:#fff;border-color:var(--verde);}
 
+/* BOTÕES DE ESCOLHA (Etapa 1) */
+#buttonArea{display:flex;flex-direction:column;gap:8px;padding:8px 16px 4px;}
+.choice-btn{background:var(--slack-surface);border:0.5px solid var(--slack-border);border-radius:8px;padding:10px 14px;font-family:'Inter',sans-serif;font-size:13px;color:var(--slack-text);cursor:pointer;text-align:left;transition:all 0.15s;line-height:1.5;width:100%;}
+.choice-btn:hover{border-color:var(--verde-light);color:#fff;background:#2a2e32;}
+
 /* RESPONSIVO — telas até 640px */
 @media (max-width: 640px) {
   .main{padding:0.75rem 0.75rem 2rem;}
@@ -185,27 +190,6 @@ body{font-family:'Inter',sans-serif;background:var(--creme2);color:var(--text);m
         <p>Olá! Sou o Cajus, coordenador de projetos aqui na agência. Seja bem-vindo(a) à <strong>Visita Amazônia</strong>!<br><br>
 Aqui usamos um canal de comunicação interno para resolver tudo em tempo real. Você vai entrar nesse canal e um colega — eu mesmo — vai te mandar situações do dia a dia da agência. <strong>Você precisa responder em português</strong>, escolhendo as palavras certas para cada momento.<br><br>
 O jeito que você escreve importa: uma mensagem mal redigida pode travar uma campanha ou irritar um cliente. Pronto(a) para entrar no canal?</p>
-      </div>
-    </div>
-
-    <div>
-      <div class="mode-title">O que vamos praticar?</div>
-      <div class="mode-grid">
-        <button class="mode-btn" onclick="selectMode('subjuntivo',this)">
-          <div class="mode-icon">🌱</div>
-          <span class="mode-label">Subjuntivo</span>
-          <span class="mode-desc">Sugestões, desejos e pedidos indiretos com o presente do subjuntivo.</span>
-        </button>
-        <button class="mode-btn" onclick="selectMode('imperativo',this)">
-          <div class="mode-icon">📋</div>
-          <span class="mode-label">Imperativo</span>
-          <span class="mode-desc">Delegar tarefas e dar instruções diretas com o imperativo.</span>
-        </button>
-        <button class="mode-btn" onclick="selectMode('livre',this)">
-          <div class="mode-icon">🎯</div>
-          <span class="mode-label">Modo livre</span>
-          <span class="mode-desc">Situações mistas — você decide qual estrutura usar.</span>
-        </button>
       </div>
     </div>
 
@@ -274,7 +258,9 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
           <div class="typing-bubble"><span></span><span></span><span></span></div>
         </div>
 
-        <div class="chat-input-area">
+        <div id="buttonArea"></div>
+
+        <div id="chatInputArea" class="chat-input-area" style="display:none;">
           <div class="input-box">
             <input type="text" id="userInput" placeholder="Mensagem para Cajus..." />
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
@@ -295,7 +281,7 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
       <div class="results-detail" id="resultsDetail"></div>
       <div class="results-btns">
         <button class="action-btn primary" onclick="restartGame()">Jogar novamente</button>
-        <button class="action-btn" onclick="goHome()">Escolher outro modo</button>
+        <button class="action-btn" onclick="goHome()">Voltar ao início</button>
       </div>
     </div>
   </div>
@@ -303,10 +289,9 @@ O jeito que você escreve importa: uma mensagem mal redigida pode travar uma cam
 </div>
 
 <script>
-let mode=null,totalRounds=0,currentRound=0,score=0,history=[];
+let mode='livre',totalRounds=0,currentRound=0,score=0,history=[],stage=1;
 let nomeAluno='',tentativasRodada=0,resumoRodadas=[];
 
-function selectMode(m,btn){mode=m;document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
 function selectRounds(n,btn){totalRounds=n;document.querySelectorAll('.round-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
 function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',4000);}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -348,39 +333,53 @@ function updateProgress(){
   document.getElementById('scoreChip').innerHTML=score+' pts · situação <span id="roundNum">'+currentRound+'</span> de <span id="roundTotal">'+totalRounds+'</span>';
 }
 
-function buildSystemPrompt(){
-  var modos = {
-    subjuntivo: 'O aluno deve usar PRESENTE DO SUBJUNTIVO na resposta. Frases com: espero que, quero que, preciso que, e importante que, sugiro que. ERRADO: imperativo ou condicional. CERTO: qualquer frase com esses gatilhos.',
-    imperativo: 'O aluno deve usar IMPERATIVO na resposta. Verbo direto sem sujeito: Envie, Sente-se, Prepare, Confirme, Aguarde. ERRADO: voce poderia, por favor poderia, eu gostaria. CERTO: verbo direto mesmo com por favor.',
-    livre: 'O aluno pode usar SUBJUNTIVO ou IMPERATIVO. Ambos sao corretos para a situacao.'
-  };
-  var linhas = [
+function buildStage1Prompt(){
+  return [
     'Voce e Cajus, coordenador da Visita Amazonia, agencia de turismo da Amazonia.',
     'Voce conversa pelo Slack com colaborador estrangeiro aprendendo portugues B1.',
     '',
-    'MODO: ' + modos[mode],
+    'FASE 1 — COMPREENSAO DE CENARIO',
     '',
     '!! REGRA ABSOLUTA: Responda SOMENTE JSON. Zero texto fora do JSON. !!',
     '',
     'Para INICIAR_SESSAO:',
-    '{"status":"start","messages":["ola animado explicando o modo","primeira situacao curta"]}',
+    'Apresente uma situacao de trabalho curta e clara (1-2 frases) e gere 3 opcoes para o aluno identificar o que a mensagem pede. Uma opcao e correta, duas sao plausíveis mas erradas.',
+    '{"status":"start","messages":["saudacao informal + boas-vindas ao canal","situacao de trabalho concreta"],"buttons":["opcao correta","opcao plausivel errada","opcao plausivel errada"]}',
+    '',
+    'Para avaliar a escolha do aluno:',
+    'Se CORRETA: {"status":"stage2","messages":["comemoracao curta + confirma entendimento","agora escreva uma mensagem no chat pedindo ou sugerindo isso ao colega"],"buttons":[]}',
+    'Se ERRADA: {"status":"retry","messages":["feedback gentil + reformula a situacao brevemente"],"buttons":["nova opcao correta","nova opcao errada","nova opcao errada"]}',
+    '',
+    'Tom: informal brasileiro, emojis, max 2 frases por mensagem, NUNCA mencione gramatica.'
+  ].join('\n');
+}
+
+function buildStage2Prompt(){
+  return [
+    'Voce e Cajus, coordenador da Visita Amazonia, agencia de turismo da Amazonia.',
+    'Voce conversa pelo Slack com colaborador estrangeiro aprendendo portugues B1.',
+    '',
+    'FASE 2 — PRODUCAO GRAMATICAL (MODO LIVRE)',
+    'O aluno pode usar SUBJUNTIVO ou IMPERATIVO. Ambos sao corretos.',
+    '',
+    '!! REGRA ABSOLUTA: Responda SOMENTE JSON. Zero texto fora do JSON. !!',
     '',
     'Para avaliar resposta do aluno:',
-    'CORRETO = usou a estrutura gramatical do modo acima, mesmo que simples ou com por favor',
-    'ERRADO = usou estrutura diferente (ex: condicional quando devia ser imperativo)',
+    'CORRETO = usou subjuntivo (espero que, quero que, preciso que) OU imperativo (verbo direto: Envie, Prepare, Confirme)',
+    'ERRADO = usou estrutura diferente (ex: condicional, infinitivo puro)',
     '',
-    'Se CORRETO: {"status":"correct","messages":["comemoracao emoji + explica por que funcionou comunicativamente","proxima situacao"],"points":10}',
+    'Se CORRETO: {"status":"correct","messages":["comemoracao emoji + explica por que funcionou comunicativamente","proxima situacao de trabalho"],"points":10}',
     'Se ERRADO: {"status":"retry","messages":["uma msg curta fingindo nao entender + reformula a mesma situacao"],"points":0}',
     '',
     'Tom: informal brasileiro, emojis, max 2 frases por situacao, NUNCA diga subjuntivo ou imperativo.'
-  ];
-  return linhas.join('\n');
+  ].join('\n');
 }
 
 async function callAPI(msg){
   history.push({role:'user',content:msg});
   try{
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history,systemPrompt:buildSystemPrompt()})});
+    const systemPrompt=stage===1?buildStage1Prompt():buildStage2Prompt();
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history,systemPrompt})});
     const data=await res.json();
     if(data.error)throw new Error(data.error);
     history.push({role:'assistant',content:data.reply});
@@ -395,7 +394,6 @@ function parseJSON(text){
   if(!text) return {status:'retry',messages:['Tenta de novo! 😅'],points:0};
   try{
     var clean = text.replace(/```json|```/g,'').trim();
-    // Se vier como string JSON escapada dentro de outro JSON, desescapa
     var parsed = JSON.parse(clean);
     if(typeof parsed === 'string') parsed = JSON.parse(parsed);
     return parsed;
@@ -411,14 +409,13 @@ function parseJSON(text){
 async function startGame(){
   const nome=document.getElementById('nomeInput')?.value.trim()||'';
   if(!nome)return showError('Digite seu nome antes de continuar.');
-  if(!mode)return showError('Escolha o que vamos praticar antes de continuar.');
   if(!totalRounds)return showError('Escolha quantas situações por sessão.');
   nomeAluno=nome;tentativasRodada=0;resumoRodadas=[];
-  currentRound=0;score=0;history=[];
+  currentRound=0;score=0;history=[];stage=1;
   document.getElementById('chatMessages').innerHTML='';
+  document.getElementById('buttonArea').innerHTML='';
+  document.getElementById('chatInputArea').style.display='none';
   showScreen('screen-game');
-  document.getElementById('userInput').disabled=true;
-  document.getElementById('sendBtn').disabled=true;
   showTyping(true);
   try{
     const raw=await callAPI('INICIAR_SESSAO');
@@ -431,16 +428,57 @@ async function startGame(){
       if(i>0)await sleep(600);
       addMessage('bot',msgs[i]);
     }
+    if(result.buttons&&result.buttons.length)showButtons(result.buttons);
   }catch(e){
     showTyping(false);
     addMessage('bot','Oi! Tive um problema técnico aqui 😅 Tenta recarregar a página?');
   }
-  document.getElementById('userInput').disabled=false;
-  document.getElementById('sendBtn').disabled=false;
-  document.getElementById('userInput').focus();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function showButtons(buttons){
+  const area=document.getElementById('buttonArea');
+  area.innerHTML='';
+  buttons.forEach(text=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=text;
+    btn.onclick=()=>selectButton(text);
+    area.appendChild(btn);
+  });
+}
+
+function selectButton(text){
+  document.getElementById('buttonArea').innerHTML='';
+  addMessage('user',text);
+  sendButtonChoice(text);
+}
+
+async function sendButtonChoice(choice){
+  showTyping(true);
+  try{
+    const raw=await callAPI(choice);
+    const result=parseJSON(raw);
+    showTyping(false);
+    const msgs=result.messages||[];
+    for(let i=0;i<msgs.length;i++){
+      if(i>0)await sleep(600);
+      addMessage('bot',msgs[i]);
+    }
+    if(result.status==='stage2'){
+      stage=2;
+      document.getElementById('chatInputArea').style.display='block';
+      document.getElementById('userInput').focus();
+    } else if(result.status==='retry'&&result.buttons&&result.buttons.length){
+      await sleep(400);
+      showButtons(result.buttons);
+    }
+  }catch(e){
+    showTyping(false);
+    addMessage('bot','Hmm, tive um probleminha 😅 Tenta de novo?');
+  }
+}
 
 async function sendMsg(){
   const val=document.getElementById('userInput').value.trim();
@@ -530,8 +568,8 @@ function showResults(){
   showScreen('screen-results');
 }
 
-function restartGame(){score=0;currentRound=0;history=[];document.getElementById('chatMessages').innerHTML='';showScreen('screen-game');startGame();}
-function goHome(){score=0;currentRound=0;history=[];mode=null;totalRounds=0;document.querySelectorAll('.mode-btn,.round-btn').forEach(b=>b.classList.remove('selected'));showScreen('screen-onboard');}
+function restartGame(){score=0;currentRound=0;history=[];stage=1;document.getElementById('chatMessages').innerHTML='';document.getElementById('buttonArea').innerHTML='';document.getElementById('chatInputArea').style.display='none';startGame();}
+function goHome(){score=0;currentRound=0;history=[];stage=1;mode='livre';totalRounds=0;document.querySelectorAll('.round-btn').forEach(b=>b.classList.remove('selected'));document.getElementById('chatMessages').innerHTML='';document.getElementById('buttonArea').innerHTML='';document.getElementById('chatInputArea').style.display='none';showScreen('screen-onboard');}
 </script>
 </body>
 </html>
